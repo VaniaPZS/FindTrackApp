@@ -47,12 +47,6 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
 
         var response = await HttpAudioRequest().auddRequest(url, encodedSong);
 
-        // await http.post(Uri.parse(url), body: {
-        //   "audio": encodedSong,
-        //   "api_token": "89364fbeac8169a2d87a9da86211584b",
-        //   "return": "spotify,apple_music,deezer",
-        // });
-
         if (response.statusCode == HttpStatus.ok) {
           print(jsonDecode(response.body));
           return jsonDecode(response.body);
