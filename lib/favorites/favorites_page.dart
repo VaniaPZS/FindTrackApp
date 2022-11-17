@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:practica1/favorites/song_page.dart';
@@ -26,41 +28,50 @@ class FavoriteBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var listaDatos = context.watch<FavoriteBloc>().favoriteSongsList;
-    return ListView.builder(
-        itemCount: listaDatos.length,
-        itemBuilder: (BuildContext context, index) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => SongPage(
-                            songName: listaDatos[index]['songName'],
-                            albumName: listaDatos[index]['albumName'],
-                            artistName: listaDatos[index]['artistName'],
-                            songYear: listaDatos[index]['songYear'],
-                            urlApple: listaDatos[index]['urlApple'],
-                            urlSpotify: listaDatos[index]['urlSpotify'],
-                            urlDeezer: listaDatos[index]['urlDeezer'],
-                            urlImage: listaDatos[index]['urlImage'],
-                          )));
-            },
-            child: Column(
-              children: [
-                FavoriteSong(
-                  songName: listaDatos[index]['songName'],
-                  artistName: listaDatos[index]['artistName'],
-                  albumName: listaDatos[index]['albumName'],
-                  urlImage: listaDatos[index]['urlImage'],
-                  songYear: listaDatos[index]['songYear'],
-                  urlApple: listaDatos[index]['urlApple'],
-                  urlDeezer: listaDatos[index]['urlDeezer'],
-                  urlSpotify: listaDatos[index]['urlSpotify'],
-                ),
-              ],
-            ),
-          );
+    // var listaDatos = context.watch<FavoriteBloc>().favoriteSongsList;
+    return StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('favorites').where('user', isEqualTo: FirebaseAuth.instance.currentUser?.uid).snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasData) {
+            final snap = snapshot.data!.docs;
+            return ListView.builder(
+                itemCount: snap.length,
+                itemBuilder: (BuildContext context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => SongPage(
+                                    songName: snap[index]['songName'],
+                                    albumName: snap[index]['albumName'],
+                                    artistName: snap[index]['artistName'],
+                                    songYear: snap[index]['songYear'],
+                                    urlApple: snap[index]['urlApple'],
+                                    urlSpotify: snap[index]['urlSpotify'],
+                                    urlDeezer: snap[index]['urlDeezer'],
+                                    urlImage: snap[index]['urlImage'],
+                                  )));
+                    },
+                    child: Column(
+                      children: [
+                        FavoriteSong(
+                          songName: snap[index]['songName'],
+                          artistName: snap[index]['artistName'],
+                          albumName: snap[index]['albumName'],
+                          urlImage: snap[index]['urlImage'],
+                          songYear: snap[index]['songYear'],
+                          urlApple: snap[index]['urlApple'],
+                          urlDeezer: snap[index]['urlDeezer'],
+                          urlSpotify: snap[index]['urlSpotify'],
+                        ),
+                      ],
+                    ),
+                  );
+                });
+          } else {
+            return SizedBox();
+          }
         });
   }
 }
@@ -158,7 +169,8 @@ class FavoriteSong extends StatelessWidget {
     );
   }
 
-  Future<void> showDeleteDialog(BuildContext context, Map<dynamic, dynamic> infoSong) {
+  Future<void> showDeleteDialog(
+      BuildContext context, Map<dynamic, dynamic> infoSong) {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!

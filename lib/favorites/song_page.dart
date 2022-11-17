@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -154,101 +156,101 @@ class SongPage extends StatelessWidget {
   }
 
   Future<void> showDialogAddFavorite(context) async {
+    Map infoSong = {
+      'artistName': artistName,
+      'songName': songName,
+      'albumName': albumName,
+      'urlImage': urlImage,
+      'urlApple': urlApple,
+      'urlSpotify': urlSpotify,
+      'urlDeezer': urlDeezer,
+      'songYear': songYear
+    };
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
-        var listaDatos = context.watch<FavoriteBloc>().favoriteSongsList;
-        bool check = false;
+        return StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('favorites')
+                .where('user',
+                    isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+                .where('songName', isEqualTo: infoSong['songName'])
+                .snapshots(),
+            builder:
+                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              print('hola');
+              print(snapshot);
 
-        Map infoSong = {
-          'artistName': artistName,
-          'songName': songName,
-          'albumName': albumName,
-          'urlImage': urlImage,
-          'urlApple': urlApple,
-          'urlSpotify': urlSpotify,
-          'urlDeezer': urlDeezer,
-          'songYear': songYear
-        };
+              if (snapshot.hasData) {
+                return AlertDialog(
+                  title: const Text('Quitar de favoritos'),
+                  content: SingleChildScrollView(
+                    child: ListBody(
+                      children: const <Widget>[
+                        Text('¿Eliminar canción de favoritos?'),
+                      ],
+                    ),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Cancelar'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: const Text('Aceptar'),
+                      onPressed: () {
+                        BlocProvider.of<FavoriteBloc>(context)
+                            .add(DeleteFavoriteEvent(infoSong));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Se ha eliminado la canción.')));
 
-        for (int i = 0; i < listaDatos.length; i++) {
-          Map songElement = listaDatos[i];
-          print(songElement);
-          if (songElement['songName'] == infoSong['songName']) {
-            check = true;
-          } else {
-            check = false;
-          }
-        }
-
-        if (check) {
-          return AlertDialog(
-            title: const Text('Quitar de favoritos'),
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: const <Widget>[
-                  Text('¿Eliminar canción de favoritos?'),
-                ],
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Cancelar'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: const Text('Aceptar'),
-                onPressed: () {
-                  BlocProvider.of<FavoriteBloc>(context)
-                      .add(DeleteFavoriteEvent(infoSong));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Se ha eliminado la canción.')));
-
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        }
-
-        return AlertDialog(
-          title: const Text('Agregar a favoritos'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: const <Widget>[
-                Text('¿Agregar canción a favoritos?'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Aceptar'),
-              onPressed: () {
-                BlocProvider.of<FavoriteBloc>(context).add(AddFavoriteEvent(
-                    songName,
-                    artistName,
-                    albumName,
-                    urlImage,
-                    urlApple,
-                    urlSpotify,
-                    urlDeezer,
-                    songYear));
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Se ha agregado la canción.')));
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              } else {
+                return AlertDialog(
+                  title: const Text('Agregar a favoritos'),
+                  content: SingleChildScrollView(
+                    child: ListBody(
+                      children: const <Widget>[
+                        Text('¿Agregar canción a favoritos?'),
+                      ],
+                    ),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Cancelar'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: const Text('Aceptar'),
+                      onPressed: () {
+                        BlocProvider.of<FavoriteBloc>(context).add(
+                            AddFavoriteEvent(
+                                songName,
+                                artistName,
+                                albumName,
+                                urlImage,
+                                urlApple,
+                                urlSpotify,
+                                urlDeezer,
+                                songYear));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Se ha agregado la canción.')));
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              }
+            });
       },
     );
   }

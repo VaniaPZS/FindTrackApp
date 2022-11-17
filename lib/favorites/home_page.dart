@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:practica1/auth/bloc/auth_bloc.dart';
 import 'package:practica1/favorites/bloc/music_bloc.dart';
 import 'package:practica1/favorites/options_button.dart';
 import 'package:practica1/favorites/song_page.dart';
@@ -43,25 +44,23 @@ class HomePage extends StatelessWidget {
               }
             },
             builder: (context, state) {
-              if(state is GetMusicLoadState){
-              return homePageMenu(true, context, 'Escuchando...');
+              if (state is GetMusicLoadState) {
+                return homePageMenu(true, context, 'Escuchando...');
               }
               // String textListening = context.watch<MusicBloc>().listeningText;
               return homePageMenu(false, context, 'Toque para reconocer!');
-              
             },
           ),
         ));
   }
 
-  Column homePageMenu(bool animateBool, BuildContext context, String listeningText) {
+  Column homePageMenu(
+      bool animateBool, BuildContext context, String listeningText) {
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(listeningText, style: TextStyle(fontSize: 20))
-          ],
+          children: [Text(listeningText, style: TextStyle(fontSize: 20))],
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
@@ -78,7 +77,13 @@ class HomePage extends StatelessWidget {
               OptionsButton(
                 selectedIcon: Icon(Icons.favorite),
                 text: 'Ver Favoritos',
-              )
+                option: 'Favoritos',
+              ),
+              OptionsButton(
+                selectedIcon: Icon(Icons.power_settings_new_sharp),
+                text: 'Sign Out' ,
+                option: 'SignOut',
+              ),
             ],
           ),
         )
@@ -86,3 +91,4 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
-import 'dart:io';
-
+import 'package:firebase_auth/firebase_auth.dart';
 part 'favorite_event.dart';
 part 'favorite_state.dart';
 
@@ -24,23 +24,22 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
       String urlSpotify,
       String urlDeezer,
       String songYear) async {
-    Map infoSong = {
-      'artistName': artistName,
-      'songName': songName,
-      'albumName': albumName,
-      'urlImage': urlImage,
-      'urlApple': urlApple,
-      'urlSpotify': urlSpotify,
-      'urlDeezer': urlDeezer,
-      'songYear': songYear
-    };
 
     try {
-      // if(favoriteSongsList!.isNotEmpty){
-      favoriteSongsList.add(infoSong);
-      print(favoriteSongsList);
+
+      await FirebaseFirestore.instance.collection('favorites').add({
+        'songName': songName,
+        'artistName': artistName,
+        'albumName': albumName,
+        'urlImage': urlImage,
+        'urlApple': urlApple,
+        'urlSpotify': urlSpotify,
+        'urlDeezer': urlDeezer,
+        'songYear': songYear,
+        'user': FirebaseAuth.instance.currentUser?.uid
+      });
+
       return true;
-      // }
 
     } catch (e) {
       print('Error: $e');
@@ -58,7 +57,7 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
         event.urlDeezer,
         event.songYear);
     print(favoriteSongResponse);
-    if (favoriteSongResponse != null) {
+    if (favoriteSongResponse == true) {
       emit(FavoriteSuccessState());
     } else {
       emit(FavoriteErrorState(error: 'Error'));
@@ -69,18 +68,29 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
     try {
       // if(favoriteSongsList!.isNotEmpty){
 
-      for (int i = 0; i < favoriteSongsList.length; i++) {
-        Map songElement = favoriteSongsList[i];
-        if (songElement['title'] == favoriteSongsList[i]['title']) {
-          favoriteSongsList.removeAt(i);
-        }
-      }
-      // favoriteSongsList
-      //     .removeWhere((item) => item['title'] = songToDelete['title']);
-      print(favoriteSongsList);
-      return true;
+      // for (int i = 0; i < favoriteSongsList.length; i++) {
+      //   Map songElement = favoriteSongsList[i];
+      //   if (songElement['title'] == favoriteSongsList[i]['title']) {
+      //     favoriteSongsList.removeAt(i);
+      //   }
       // }
+      // // favoriteSongsList
+      // //     .removeWhere((item) => item['title'] = songToDelete['title']);
+      // print(favoriteSongsList);
 
+      // }
+      var deletedSong = await FirebaseFirestore.instance
+          .collection('favorites')
+          .where('user', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+          .where('songName', isEqualTo: songToDelete['songName'])
+          .get()
+          .then((QuerySnapshot) => QuerySnapshot);
+
+      for(var song in deletedSong.docs){
+        await song.reference.delete();
+      }
+
+      return true;
     } catch (e) {
       print('Error: $e');
     }
@@ -90,7 +100,7 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
     bool deletedSong = await deleteFavoriteSong(event.songToDelete);
     print(deletedSong);
 
-    if (deletedSong != null) {
+    if (deletedSong == true) {
       emit(DeleteFavoriteSuccessState());
     } else {
       emit(DeleteFavoriteErrorState(error: 'Error'));
