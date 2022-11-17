@@ -182,7 +182,7 @@ class SongPage extends StatelessWidget {
               print('hola');
               print(snapshot);
 
-              if (snapshot.hasData) {
+              if (!snapshot.hasData) {
                 return AlertDialog(
                   title: const Text('Quitar de favoritos'),
                   content: SingleChildScrollView(
